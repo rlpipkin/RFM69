@@ -481,7 +481,6 @@ void RFM69::setCS(uint8_t newSPISlaveSelect) {
 }
 
 //for debugging
-
 #define REGISTER_DETAIL 1
 
 #if REGISTER_DETAIL
@@ -506,8 +505,8 @@ void RFM69::readAllRegs()
 
   //... State Variables for intelligent decoding
   uint8_t modeFSK = 0;
-  int bitRate = 0;
-  int freqDev = 0;
+  int16_t bitRate = 0;
+  int16_t freqDev = 0;
   long freqCenter = 0;
 #endif
   
@@ -528,7 +527,7 @@ void RFM69::readAllRegs()
 #if REGISTER_DETAIL 
     switch ( regAddr ) 
     {
-        case 0x1 : {
+        case REG_OPMODE : {
             SerialPrint ( "Controls the automatic Sequencer ( see section 4.2 )\nSequencerOff : " );
             if ( 0x80 & regVal ) {
                 SerialPrint ( "1 -> Mode is forced by the user\n" );
@@ -568,7 +567,7 @@ void RFM69::readAllRegs()
             break;
         }
         
-        case 0x2 : {
+        case REG_DATAMODUL : {
         
             SerialPrint("Data Processing mode:\nDataMode : ");
             capVal = (regVal >> 5) & 0x3;
@@ -629,12 +628,12 @@ void RFM69::readAllRegs()
             break;
         }
         
-        case 0x3 : {
+        case REG_BITRATEMSB : {
             bitRate = (regVal << 8);
             break;
         }
         
-        case 0x4 : {
+        case REG_BITRATELSB : {
             bitRate |= regVal;
             SerialPrint ( "Bit Rate (Chip Rate when Manchester encoding is enabled)\nBitRate : ");
             unsigned long val = 32UL * 1000UL * 1000UL / bitRate;
@@ -643,12 +642,12 @@ void RFM69::readAllRegs()
             break;
         }
         
-        case 0x5 : {
+        case REG_FDEVMSB : {
             freqDev = ( (regVal & 0x3f) << 8 );
             break;
         }
         
-        case 0x6 : {
+        case REG_FDEVLSB : {
             freqDev |= regVal;
             SerialPrint( "Frequency deviation\nFdev : " );
             unsigned long val = 61UL * freqDev;
@@ -657,19 +656,19 @@ void RFM69::readAllRegs()
             break;
         }
         
-        case 0x7 : {
+        case REG_FRFMSB : {
             unsigned long tempVal = regVal;
             freqCenter = ( tempVal << 16 );
             break;
         }
        
-        case 0x8 : {
+        case REG_FRFMID : {
             unsigned long tempVal = regVal;
             freqCenter = freqCenter | ( tempVal << 8 );
             break;
         }
 
-        case 0x9 : {        
+        case REG_FRFLSB : {        
             freqCenter = freqCenter | regVal;
             SerialPrint ( "RF Carrier frequency\nFRF : " );
             unsigned long val = 61UL * freqCenter;
@@ -678,7 +677,7 @@ void RFM69::readAllRegs()
             break;
         }
 
-        case 0xa : {
+        case REG_OSC1 : {
             SerialPrint ( "RC calibration control & status\nRcCalDone : " );
             if ( 0x40 & regVal ) {
                 SerialPrint ( "1 -> RC calibration is over\n" );
@@ -690,7 +689,7 @@ void RFM69::readAllRegs()
             break;
         }
 
-        case 0xb : {
+        case REG_AFCCTRL : {
             SerialPrint ( "Improved AFC routine for signals with modulation index lower than 2.  Refer to section 3.4.16 for details\nAfcLowBetaOn : " );
             if ( 0x20 & regVal ) {
                 SerialPrint ( "1 -> Improved AFC routine\n" );
@@ -701,12 +700,12 @@ void RFM69::readAllRegs()
             break;
         }
         
-        case 0xc : {
+        case REG_LOWBAT : {
             SerialPrint ( "Reserved\n\n" );
             break;
         }
 
-        case 0xd : {
+        case REG_LISTEN1 : {
             byte val;
             SerialPrint ( "Resolution of Listen mode Idle time (calibrated RC osc):\nListenResolIdle : " );
             val = regVal >> 6;
