@@ -510,7 +510,7 @@ void RFM69::readAllRegs()
   long freqCenter = 0;
 #endif
   
-  SerialPrint ( "Address - HEX - BIN\n" );  
+  Serial.println("Address - HEX - BIN");
   for (uint8_t regAddr = 1; regAddr <= 0x4F; regAddr++)
   {
     select();
