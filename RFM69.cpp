@@ -485,7 +485,8 @@ void RFM69::setCS(uint8_t newSPISlaveSelect) {
 
 #if REGISTER_DETAIL
 // SERIAL PRINT
-// replace Serial.print("string") with SerialPrint("string")
+// replace Serial.print("string") with SerialPrint("string") to avoid using ram for storing the text.
+// This will allow it to print directly from program memory for debugging. 
 #define SerialPrint(x) SerialPrint_P(PSTR(x))
 void SerialWrite ( uint8_t c ) {
     Serial.write ( c );
@@ -523,7 +524,7 @@ void RFM69::readAllRegs()
     Serial.print(regVal,HEX);
     Serial.print(" - ");
     Serial.println(regVal,BIN);
-
+    
 #if REGISTER_DETAIL 
     switch ( regAddr ) 
     {
