@@ -529,39 +529,39 @@ void RFM69::readAllRegs()
     {
         case REG_OPMODE : {
             SerialPrint ( "Controls the automatic Sequencer ( see section 4.2 )\nSequencerOff : " );
-            if ( 0x80 & regVal ) {
+            if ( RF_OPMODE_SEQUENCER_OFF & regVal ) {
                 SerialPrint ( "1 -> Mode is forced by the user\n" );
             } else {
                 SerialPrint ( "0 -> Operating mode as selected with Mode bits in RegOpMode is automatically reached with the Sequencer\n" );
             }
             
             SerialPrint( "\nEnables Listen mode, should be enabled whilst in Standby mode:\nListenOn : " );
-            if ( 0x40 & regVal ) {
+            if ( RF_OPMODE_LISTEN_ON & regVal ) {
                 SerialPrint ( "1 -> On\n" );
             } else {
                 SerialPrint ( "0 -> Off ( see section 4.3)\n" );
             }
             
             SerialPrint( "\nAborts Listen mode when set together with ListenOn=0 See section 4.3.4 for details (Always reads 0.)\n" );
-            if ( 0x20 & regVal ) {
+            if ( RF_OPMODE_LISTENABORT & regVal ) {
                 SerialPrint ( "ERROR - ListenAbort should NEVER return 1 this is a write only register\n" );
             }
             
             SerialPrint("\nTransceiver's operating modes:\nMode : ");
-            capVal = (regVal >> 2) & 0x7;
-            if ( capVal == 0b000 ) {
+            capVal = (regVal & (0x1c) );        //mask bits 4-2
+            if ( capVal == RF_OPMODE_SLEEP ) {
                 SerialPrint ( "000 -> Sleep mode (SLEEP)\n" );
-            } else if ( capVal = 0b001 ) {
+            } else if ( capVal = RF_OPMODE_STANDBY ) {
                 SerialPrint ( "001 -> Standby mode (STDBY)\n" );
-            } else if ( capVal = 0b010 ) {
+            } else if ( capVal = RF_OPMODE_SYNTHESIZER ) {
                 SerialPrint ( "010 -> Frequency Synthesizer mode (FS)\n" );
-            } else if ( capVal = 0b011 ) {
+            } else if ( capVal = RF_OPMODE_TRANSMITTER ) {
                 SerialPrint ( "011 -> Transmitter mode (TX)\n" );
-            } else if ( capVal = 0b100 ) {
+            } else if ( capVal = RF_OPMODE_RECEIVER ) {
                 SerialPrint ( "100 -> Receiver Mode (RX)\n" );
             } else {
                 Serial.print( capVal, BIN );
-                SerialPrint ( " -> RESERVED\n" );
+                SerialPrint ( " -> RESERVED; Reads the value corresponding to the current module mode\n" );
             }
             SerialPrint ( "\n" );
             break;
@@ -570,29 +570,28 @@ void RFM69::readAllRegs()
         case REG_DATAMODUL : {
         
             SerialPrint("Data Processing mode:\nDataMode : ");
-            capVal = (regVal >> 5) & 0x3;
-            if ( capVal == 0b00 ) {
+            capVal = (regVal & 0x60);
+            if ( capVal == RF_DATAMODUL_DATAMODE_PACKET ) {
                 SerialPrint ( "00 -> Packet mode\n" );
-            } else if ( capVal == 0b01 ) {
-                SerialPrint ( "01 -> reserved\n" );
-            } else if ( capVal == 0b10 ) {
+            } else if ( capVal == RF_DATAMODUL_DATAMODE_CONTINUOUS ) {
                 SerialPrint ( "10 -> Continuous mode with bit synchronizer\n" );
-            } else if ( capVal == 0b11 ) {
+            } else if ( capVal == RF_DATAMODUL_DATAMODE_CONTINUOUSNOBSYNC ) {
                 SerialPrint ( "11 -> Continuous mode without bit synchronizer\n" );
+            } else {
+                SerialPrint ( "01 -> reserved\n" );
             }
+
             
             SerialPrint("\nModulation scheme:\nModulation Type : ");
-            capVal = (regVal >> 3) & 0x3;
-            if ( capVal == 0b00 ) {
+            capVal = (regVal & 0x18);
+            if ( capVal == RF_DATAMODUL_MODULATIONTYPE_FSK ) {
                 SerialPrint ( "00 -> FSK\n" );
                 modeFSK = 1;
-            } else if ( capVal == 0b01 ) {
+            } else if ( capVal == RF_DATAMODUL_MODULATIONTYPE_OOK ) {
                 SerialPrint ( "01 -> OOK\n" );
-            } else if ( capVal == 0b10 ) {
-                SerialPrint ( "10 -> reserved\n" );
-            } else if ( capVal == 0b11 ) {
-                SerialPrint ( "11 -> reserved\n" );
-            }
+            } else {
+                SerialPrint ( "10 or 11  -> reserved\n" );
+            } 
             
             SerialPrint("\nData shaping: ");
             if ( modeFSK ) {
@@ -603,23 +602,23 @@ void RFM69::readAllRegs()
             SerialPrint ("ModulationShaping : ");
             capVal = regVal & 0x3;
             if ( modeFSK ) {
-                if ( capVal == 0b00 ) {
+                if ( capVal == RF_DATAMODUL_MODULATIONSHAPING_00 ) {
                     SerialPrint ( "00 -> no shaping\n" );
-                } else if ( capVal == 0b01 ) {
+                } else if ( capVal == RF_DATAMODUL_MODULATIONSHAPING_01 ) {
                     SerialPrint ( "01 -> Gaussian filter, BT = 1.0\n" );
-                } else if ( capVal == 0b10 ) {
+                } else if ( capVal == RF_DATAMODUL_MODULATIONSHAPING_10 ) {
                     SerialPrint ( "10 -> Gaussian filter, BT = 0.5\n" );
-                } else if ( capVal == 0b11 ) {
+                } else if ( capVal == RF_DATAMODUL_MODULATIONSHAPING_11 ) {
                     SerialPrint ( "11 -> Gaussian filter, BT = 0.3\n" );
                 }
             } else {
-                if ( capVal == 0b00 ) {
+                if ( capVal == RF_DATAMODUL_MODULATIONSHAPING_00 ) {
                     SerialPrint ( "00 -> no shaping\n" );
-                } else if ( capVal == 0b01 ) {
+                } else if ( capVal == RF_DATAMODUL_MODULATIONSHAPING_01 ) {
                     SerialPrint ( "01 -> filtering with f(cutoff) = BR\n" );
-                } else if ( capVal == 0b10 ) {
+                } else if ( capVal == RF_DATAMODUL_MODULATIONSHAPING_10 ) {
                     SerialPrint ( "10 -> filtering with f(cutoff) = 2*BR\n" );
-                } else if ( capVal == 0b11 ) {
+                } else if ( capVal == RF_DATAMODUL_MODULATIONSHAPING_11 ) {
                     SerialPrint ( "ERROR - 11 is reserved\n" );
                 }
             }
