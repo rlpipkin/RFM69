@@ -508,6 +508,8 @@ void RFM69::readAllRegs()
   uint8_t modeFSK = 0;
   int16_t bitRate = 0;
   int16_t freqDev = 0;
+  int16_t resolutionIdle = 0;
+  int16_t resolutionReceive = 0;
   long freqCenter = 0;
 #endif
   
@@ -679,7 +681,7 @@ void RFM69::readAllRegs()
 
         case REG_OSC1 : {
             SerialPrint ( "RC calibration control & status\nRcCalDone : " );
-            if ( 0x40 & regVal ) {
+            if ( RF_OSC1_RCCAL_DONE & regVal ) {
                 SerialPrint ( "1 -> RC calibration is over\n" );
             } else {
                 SerialPrint ( "0 -> RC calibration is in progress\n" );
@@ -691,7 +693,7 @@ void RFM69::readAllRegs()
 
         case REG_AFCCTRL : {
             SerialPrint ( "Improved AFC routine for signals with modulation index lower than 2.  Refer to section 3.4.16 for details\nAfcLowBetaOn : " );
-            if ( 0x20 & regVal ) {
+            if ( RF_AFCCTRL_LOWBETA_ON & regVal ) {
                 SerialPrint ( "1 -> Improved AFC routine\n" );
             } else {
                 SerialPrint ( "0 -> Standard AFC routine\n" );
@@ -706,52 +708,105 @@ void RFM69::readAllRegs()
         }
 
         case REG_LISTEN1 : {
-            byte val;
             SerialPrint ( "Resolution of Listen mode Idle time (calibrated RC osc):\nListenResolIdle : " );
-            val = regVal >> 6;
-            if ( val == 0b00 ) {
-                SerialPrint ( "00 -> reserved\n" );
-            } else if ( val == 0b01 ) {
+            if ( regVal & RF_LISTEN1_RESOL_IDLE_64 ) {
                 SerialPrint ( "01 -> 64 us\n" );
-            } else if ( val == 0b10 ) {
+                resolutionIdle = 64;
+            } else if ( regVal & RF_LISTEN1_RESOL_IDLE_4100 ) {
                 SerialPrint ( "10 -> 4.1 ms\n" );
-            } else if ( val == 0b11 ) {
+                resolutionIdle = 4100;
+            } else if ( regVal & RF_LISTEN1_RESOL_IDLE_262000 ) {
                 SerialPrint ( "11 -> 262 ms\n" );
+                resolutionIdle = 262000;
+            } else {
+                SerialPrint ( "00 -> reserved\n" );
             }
             
             SerialPrint ( "\nResolution of Listen mode Rx time (calibrated RC osc):\nListenResolRx : " );
-            val = (regVal >> 4) & 0x3;
-            if ( val == 0b00 ) {
-                SerialPrint ( "00 -> reserved\n" );
-            } else if ( val == 0b01 ) {
+            if ( regVal & RF_LISTEN1_RESOL_RX_64 ) {
                 SerialPrint ( "01 -> 64 us\n" );
-            } else if ( val == 0b10 ) {
+                resolutionReceive = 64;
+            } else if ( regVal & RF_LISTEN1_RESOL_RX_4100 ) {
                 SerialPrint ( "10 -> 4.1 ms\n" );
-            } else if ( val == 0b11 ) {
+                resolutionReceive = 4100;
+            } else if ( regVal & RF_LISTEN1_RESOL_RX_262000 ) {
                 SerialPrint ( "11 -> 262 ms\n" );
+                resolutionReceive = 262000;
+            } else {
+                SerialPrint ( "00 -> reserved\n" );
             }
 
             SerialPrint ( "\nCriteria for packet acceptance in Listen mode:\nListenCriteria : " );
-            if ( 0x8 & regVal ) {
+            if ( RF_LISTEN1_CRITERIA_RSSIANDSYNC & regVal ) {
                 SerialPrint ( "1 -> signal strength is above RssiThreshold and SyncAddress matched\n" );
             } else {
                 SerialPrint ( "0 -> signal strength is above RssiThreshold\n" );
             }
             
             SerialPrint ( "\nAction taken after acceptance of a packet in Listen mode:\nListenEnd : " );
-            val = (regVal >> 1 ) & 0x3;
-            if ( val == 0b00 ) {
-                SerialPrint ( "00 -> chip stays in Rx mode. Listen mode stops and must be disabled (see section 4.3)\n" );
-            } else if ( val == 0b01 ) {
+            if ( regVal & RF_LISTEN1_END_01 ) {
                 SerialPrint ( "01 -> chip stays in Rx mode until PayloadReady or Timeout interrupt occurs.  It then goes to the mode defined by Mode. Listen mode stops and must be disabled (see section 4.3)\n" );
-            } else if ( val == 0b10 ) {
+            } else if ( regVal & RF_LISTEN1_END_10 ) {
                 SerialPrint ( "10 -> chip stays in Rx mode until PayloadReady or Timeout occurs.  Listen mode then resumes in Idle state.  FIFO content is lost at next Rx wakeup.\n" );
-            } else if ( val == 0b11 ) {
+            } else if ( regVal & 0x06 ) {  // complete the namespace to avoid more masking
                 SerialPrint ( "11 -> Reserved\n" );
+            } else {    // RF_LISTEN1_END_00
+                SerialPrint ( "00 -> chip stays in Rx mode. Listen mode stops and must be disabled (see section 4.3)\n" );
+            }
+
+            SerialPrint ( "\n" );
+            break;
+        }
+        
+        case REG_LISTEN2 : {
+            SerialPrint ( "Duration of the IDLE phase in Listen mode. (uS) : " );
+            unsigned long val = resolutionIdle * regVal;
+            Serial.println( val );
+            SerialPrint ( "\n" );
+            break;
+        }
+        
+        case REG_LISTEN3 : {
+            SerialPrint ( "Duration of the RECEIVE phase in Listen mode. (uS) : " );
+            unsigned long val = resolutionReceive * regVal;
+            Serial.println( val );
+            SerialPrint ( "\n" );
+            break;
+        }
+
+        case REG_VERSION : {
+            SerialPrint ( "Version code of the chip.\n" );
+            uint8_t mversion = ( regVal >> 4);
+            SerialPrint ( "    Version: ");
+            Serial.println( mversion );
+            
+            uint8_t mmask = ( regVal & 0x7 );
+            SerialPrint ( " Metal Mask: ");
+            Serial.println( mmask );
+            break;
+        }
+
+        case REG_PALEVEL : {
+            SerialPrint ( "Power Control Register\n" );
+            SerialPrint ( " PA0 : " );
+            if ( regVal & RF_PALEVEL_PA0_ON ) {
+                SerialPrint ( "1\n" );
+            } else {
+                SerialPrint ( "0\n" );
+            }
+            SerialPrint ( " PA1 : " );
+            if ( regVal & RF_PALEVEL_PA1_ON ) {
+                SerialPrint ( "1\n" );
+            } else {
+                SerialPrint ( "0\n" );
+            }
+            SerialPrint ( " PA2 : " );
+            if ( regVal & RF_PALEVEL_PA2_ON ) {
+                SerialPrint ( "1\n" );
+            } else {
+                SerialPrint ( "0\n" );
             }
             
-            
-            SerialPrint ( "\n" );
             break;
         }
         

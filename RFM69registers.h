@@ -129,17 +129,17 @@
 
 #define RF_OPMODE_LISTENABORT         0x20
 
-#define RF_OPMODE_SLEEP               0x00
-#define RF_OPMODE_STANDBY             0x04  // Default
-#define RF_OPMODE_SYNTHESIZER         0x08
-#define RF_OPMODE_TRANSMITTER         0x0C
-#define RF_OPMODE_RECEIVER            0x10
+#define RF_OPMODE_SLEEP               0x00//0b000
+#define RF_OPMODE_STANDBY             0x04//0b001   // Default
+#define RF_OPMODE_SYNTHESIZER         0x08//0b010
+#define RF_OPMODE_TRANSMITTER         0x0C//0b011
+#define RF_OPMODE_RECEIVER            0x10//0b100
 
 
 // RegDataModul
-#define RF_DATAMODUL_DATAMODE_PACKET            0x00  // Default
-#define RF_DATAMODUL_DATAMODE_CONTINUOUS        0x40
-#define RF_DATAMODUL_DATAMODE_CONTINUOUSNOBSYNC 0x60
+#define RF_DATAMODUL_DATAMODE_PACKET            0x00//0b00  // Default
+#define RF_DATAMODUL_DATAMODE_CONTINUOUS        0x40//0b10
+#define RF_DATAMODUL_DATAMODE_CONTINUOUSNOBSYNC 0x60//0b11
 
 #define RF_DATAMODUL_MODULATIONTYPE_FSK         0x00  // Default
 #define RF_DATAMODUL_MODULATIONTYPE_OOK         0x08
