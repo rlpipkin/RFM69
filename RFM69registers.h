@@ -446,17 +446,18 @@
 
 
 // RegListen1
-#define RF_LISTEN1_RESOL_64       0x50
-#define RF_LISTEN1_RESOL_4100     0xA0  // Default
-#define RF_LISTEN1_RESOL_262000   0xF0
+// Set both idle and rx at the same time with these. 
+#define RF_LISTEN1_RESOL_64               0x50
+#define RF_LISTEN1_RESOL_4100             0xA0  // Default
+#define RF_LISTEN1_RESOL_262000           0xF0
 
-#define RF_LISTEN1_RESOL_IDLE_64     0x40
-#define RF_LISTEN1_RESOL_IDLE_4100   0x80  // Default
-#define RF_LISTEN1_RESOL_IDLE_262000 0xC0
+#define RF_LISTEN1_RESOL_IDLE_64          0x40
+#define RF_LISTEN1_RESOL_IDLE_4100        0x80  // Default
+#define RF_LISTEN1_RESOL_IDLE_262000      0xC0
 
-#define RF_LISTEN1_RESOL_RX_64       0x10
-#define RF_LISTEN1_RESOL_RX_4100     0x20  // Default
-#define RF_LISTEN1_RESOL_RX_262000   0x30
+#define RF_LISTEN1_RESOL_RX_64            0x10
+#define RF_LISTEN1_RESOL_RX_4100          0x20  // Default
+#define RF_LISTEN1_RESOL_RX_262000        0x30
 
 #define RF_LISTEN1_CRITERIA_RSSI          0x00  // Default
 #define RF_LISTEN1_CRITERIA_RSSIANDSYNC   0x08
