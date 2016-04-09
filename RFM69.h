@@ -45,6 +45,9 @@
 #elif defined(__AVR_ATmega32U4__)
   #define RF69_IRQ_PIN          3
   #define RF69_IRQ_NUM          0
+#elif defined(__arm__)//Use pin 10 or any pin you want
+  #define RF69_IRQ_PIN          10
+  #define RF69_IRQ_NUM          10
 #else 
   #define RF69_IRQ_PIN          2
   #define RF69_IRQ_NUM          0  
@@ -70,6 +73,10 @@
 #define RF69_CSMA_LIMIT_MS 1000
 #define RF69_TX_LIMIT_MS   1000
 #define RF69_FSTEP  61.03515625 // == FXOSC / 2^19 = 32MHz / 2^19 (p13 in datasheet)
+
+// TWS: define CTLbyte bits
+#define RFM69_CTL_SENDACK   0x80
+#define RFM69_CTL_REQACK    0x40
 
 class RFM69 {
   public:
@@ -97,20 +104,20 @@ class RFM69 {
     void setAddress(uint8_t addr);
     void setNetwork(uint8_t networkID);
     bool canSend();
-    void send(uint8_t toAddress, const void* buffer, uint8_t bufferSize, bool requestACK=false);
-    bool sendWithRetry(uint8_t toAddress, const void* buffer, uint8_t bufferSize, uint8_t retries=2, uint8_t retryWaitTime=40); // 40ms roundtrip req for 61byte packets
-    bool receiveDone();
+    virtual void send(uint8_t toAddress, const void* buffer, uint8_t bufferSize, bool requestACK=false);
+    virtual bool sendWithRetry(uint8_t toAddress, const void* buffer, uint8_t bufferSize, uint8_t retries=2, uint8_t retryWaitTime=40); // 40ms roundtrip req for 61byte packets
+    virtual bool receiveDone();
     bool ACKReceived(uint8_t fromNodeID);
     bool ACKRequested();
-    void sendACK(const void* buffer = "", uint8_t bufferSize=0);
+    virtual void sendACK(const void* buffer = "", uint8_t bufferSize=0);
     uint32_t getFrequency();
     void setFrequency(uint32_t freqHz);
     void encrypt(const char* key);
     void setCS(uint8_t newSPISlaveSelect);
     int16_t readRSSI(bool forceTrigger=false);
     void promiscuous(bool onOff=true);
-    void setHighPower(bool onOFF=true); // has to be called after initialize() for RFM69HW
-    void setPowerLevel(uint8_t level); // reduce/increase transmit power level
+    virtual void setHighPower(bool onOFF=true); // has to be called after initialize() for RFM69HW
+    virtual void setPowerLevel(uint8_t level); // reduce/increase transmit power level
     void sleep();
     uint8_t readTemperature(uint8_t calFactor=0); // get CMOS temperature (8bit)
     void rcCalibration(); // calibrate the internal RC oscillator for use in wide temperature variations - see datasheet section [4.3.5. RC Timer Accuracy]
@@ -123,7 +130,8 @@ class RFM69 {
   protected:
     static void isr0();
     void virtual interruptHandler();
-    void sendFrame(uint8_t toAddress, const void* buffer, uint8_t size, bool requestACK=false, bool sendACK=false);
+    virtual void interruptHook(uint8_t CTLbyte) {};
+    virtual void sendFrame(uint8_t toAddress, const void* buffer, uint8_t size, bool requestACK=false, bool sendACK=false);
 
     static RFM69* selfPointer;
     uint8_t _slaveSelectPin;
@@ -133,14 +141,16 @@ class RFM69 {
     bool _promiscuousMode;
     uint8_t _powerLevel;
     bool _isRFM69HW;
+#if defined (SPCR) && defined (SPSR)
     uint8_t _SPCR;
     uint8_t _SPSR;
+#endif
 
-    void receiveBegin();
-    void setMode(uint8_t mode);
-    void setHighPowerRegs(bool onOff);
-    void select();
-    void unselect();
+    virtual void receiveBegin();
+    virtual void setMode(uint8_t mode);
+    virtual void setHighPowerRegs(bool onOff);
+    virtual void select();
+    virtual void unselect();
 };
 
 #endif
