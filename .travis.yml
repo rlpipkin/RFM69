@@ -10,9 +10,9 @@ cache:
 
 env:
     - PLATFORMIO_CI_SRC=Examples/DeepSleep
+    - PLATFORMIO_CI_SRC=Examples/DeepSleep_usingLowPowerLibrary
     - PLATFORMIO_CI_SRC=Examples/DoorBellMote
     - PLATFORMIO_CI_SRC=Examples/GarageMote
-    - PLATFORMIO_CI_SRC=Examples/GarageMote_base
     - PLATFORMIO_CI_SRC=Examples/Gateway
     - PLATFORMIO_CI_SRC=Examples/IOShield
     - PLATFORMIO_CI_SRC=Examples/MailboxNotifier
@@ -33,8 +33,8 @@ env:
     - PLATFORMIO_CI_SRC=Examples/Struct_send
     - PLATFORMIO_CI_SRC=Examples/TxRxBlinky
     - PLATFORMIO_CI_SRC=Examples/WeatherNode
-    - PLATFORMIO_CI_SRC=Examples/WirelessProgramming_gateway
-    - PLATFORMIO_CI_SRC=Examples/WirelessProgramming_node
+    - PLATFORMIO_CI_SRC=Examples/WirelessProgramming_OTA/Target
+    - PLATFORMIO_CI_SRC=Examples/WirelessProgramming_OTA/Programmer
 
 install:
     - pip install -U platformio
@@ -51,8 +51,9 @@ install:
     # http://platformio.org/#!/lib/show/531/WirelessHEX69
     # http://platformio.org/#!/lib/show/532/BMP180
     # http://platformio.org/#!/lib/show/536/Si7021
+    # http://platformio.org/#!/lib/show/684/Sparkfun BME280
 
-    - platformio lib install 7 38 125 131 136 176 531 532 536
+    - platformio lib install 7 38 125 131 136 176 531 532 536 684
 
     #- wget https://bitbucket.org/fmalpartida/st7036-display-driver/downloads/LCD_%20ST7036_v1.2.0.zip -O /tmp/st7036_source.zip
     #- unzip /tmp/st7036_source.zip -d /tmp/

@@ -1,8 +1,7 @@
 // **********************************************************************************
 // Driver definition for HopeRF RFM69W/RFM69HW/RFM69CW/RFM69HCW, Semtech SX1231/1231H
 // **********************************************************************************
-// Copyright Felix Rusu (2014), felix@lowpowerlab.com
-// http://lowpowerlab.com/
+// Copyright Felix Rusu 2016, http://www.LowPowerLab.com/contact
 // **********************************************************************************
 // License
 // **********************************************************************************
@@ -17,10 +16,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A   
 // PARTICULAR PURPOSE. See the GNU General Public        
 // License for more details.                              
-//                                                        
-// You should have received a copy of the GNU General    
-// Public License along with this program.
-// If not, see <http://www.gnu.org/licenses/>.
 //                                                        
 // Licence can be viewed at                               
 // http://www.gnu.org/licenses/gpl-3.0.txt
@@ -41,6 +36,7 @@ volatile uint8_t RFM69::PAYLOADLEN;
 volatile uint8_t RFM69::ACK_REQUESTED;
 volatile uint8_t RFM69::ACK_RECEIVED; // should be polled immediately after sending a packet with ACK request
 volatile int16_t RFM69::RSSI;          // most accurate RSSI during reception (closest to the reception)
+volatile bool RFM69::_inISR;
 RFM69* RFM69::selfPointer;
 
 bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
@@ -109,6 +105,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   while (((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00) && millis()-start < timeout); // wait for ModeReady
   if (millis()-start >= timeout)
     return false;
+  _inISR = false;
   attachInterrupt(_interruptNum, RFM69::isr0, RISING);
 
   selfPointer = this;
@@ -353,7 +350,7 @@ void RFM69::interruptHandler() {
 }
 
 // internal function
-void RFM69::isr0() { selfPointer->interruptHandler(); }
+void RFM69::isr0() { _inISR = true; selfPointer->interruptHandler(); _inISR = false; }
 
 // internal function
 void RFM69::receiveBegin() {
@@ -460,7 +457,7 @@ void RFM69::unselect() {
   SPCR = _SPCR;
   SPSR = _SPSR;
 #endif
-  interrupts();
+  maybeInterrupts();
 }
 
 // true  = disable filtering to capture all frames on network
@@ -843,4 +840,10 @@ void RFM69::rcCalibration()
 {
   writeReg(REG_OSC1, RF_OSC1_RCCAL_START);
   while ((readReg(REG_OSC1) & RF_OSC1_RCCAL_DONE) == 0x00);
+}
+
+inline void RFM69::maybeInterrupts()
+{
+  // Only reenable interrupts if we're not being called from the ISR
+  if (!_inISR) interrupts();
 }

@@ -6,10 +6,8 @@
 #define WITH_SPIFLASH           //comment this line out if you don't have the FLASH-MEM chip on your Moteino
 //***********************************************************************************************************
 
-#include <Arduino.h>            // assumes Arduino IDE v1.0 or greater
-#include <avr/sleep.h>
-#include <avr/wdt.h>
-#include <avr/power.h>
+#include <LowPower.h> //get library from: https://github.com/lowpowerlab/lowpower
+                      //writeup here: http://www.rocketscream.com/blog/2011/07/04/lightweight-low-power-arduino-library/
 
 #ifdef __AVR_ATmega1284P__
   #define LED           15 // Moteino MEGAs have LEDs on D15
@@ -24,9 +22,6 @@
   #if defined(WITH_RFM69)
     #include <RFM69.h>            //get it here: https://www.github.com/lowpowerlab/rfm69
     RFM69 radio;
-    #define NETWORKID 100
-    #define NODEID 123
-    #define FREQUENCY RF69_915MHZ
   #endif
   #if defined(WITH_SPIFLASH)
     #include <SPIFlash.h>         //get it here: https://www.github.com/lowpowerlab/spiflash
@@ -34,14 +29,8 @@
   #endif
 #endif
 
-//watchdog interrupt
-ISR (WDT_vect) {
-  wdt_disable();
-}
-
 void setup () {
 #ifdef WITH_RFM69
-  radio.initialize(FREQUENCY,NODEID,NETWORKID);
   radio.sleep();
 #endif
 
@@ -49,16 +38,6 @@ void setup () {
   if (flash.initialize())
     flash.sleep();
 #endif
-
-//  //optional blink to know radio/flash sleeping went OK
-//  pinMode(LED, OUTPUT);
-//  digitalWrite(LED, HIGH);
-//  delay(30);
-//  digitalWrite(LED, LOW);
-//  delay(50);
-//  digitalWrite(LED, HIGH);
-//  delay(50);
-//  digitalWrite(LED, LOW);
 
   for (uint8_t i=0; i<=A5; i++)
   {
@@ -71,36 +50,16 @@ void setup () {
     pinMode(i, OUTPUT);
     digitalWrite(i, LOW);
   }
-
-  power_timer1_disable();
-  power_timer2_disable();
-  power_twi_disable();
 }
 
 void loop () 
 {
-  // disable ADC
-  ADCSRA = 0;  
-  // clear various "reset" flags
-  MCUSR = 0;
-  // allow changes, disable reset
-  WDTCSR = bit (WDCE) | bit (WDE);
-  //set interrupt mode and an interval
-  WDTCSR = bit (WDIE) | bit (WDP3) | bit (WDP0); //set WDIE, and 8 seconds delay
-  wdt_reset(); //pat the dog...
-  
-  set_sleep_mode (SLEEP_MODE_PWR_DOWN);
-  noInterrupts(); // timed sequence follows  
-  sleep_enable();
+  //optional blink to know radio/flash sleeping went OK
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, HIGH);
+  delay(30);
+  digitalWrite(LED, LOW);
 
-  // turn off brown-out enable in software
-  // BODS must be set to one and BODSE must be set to zero within four clock cycles
-  MCUCR = bit (BODS) | bit (BODSE);
-  // The BODS bit is automatically cleared after three clock cycles
-  MCUCR = bit (BODS); 
-  interrupts();
-  sleep_cpu();
-
-  //cancel sleep as a precaution
-  sleep_disable();
+  //sleep MCU for 8seconds
+  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 }

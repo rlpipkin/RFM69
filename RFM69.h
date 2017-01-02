@@ -1,8 +1,7 @@
 // **********************************************************************************
 // Driver definition for HopeRF RFM69W/RFM69HW/RFM69CW/RFM69HCW, Semtech SX1231/1231H
 // **********************************************************************************
-// Copyright Felix Rusu (2014), felix@lowpowerlab.com
-// http://lowpowerlab.com/
+// Copyright Felix Rusu 2016, http://www.LowPowerLab.com/contact
 // **********************************************************************************
 // License
 // **********************************************************************************
@@ -17,10 +16,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A   
 // PARTICULAR PURPOSE. See the GNU General Public        
 // License for more details.                              
-//                                                        
-// You should have received a copy of the GNU General    
-// Public License along with this program.
-// If not, see <http://www.gnu.org/licenses/>.
 //                                                        
 // Licence can be viewed at                               
 // http://www.gnu.org/licenses/gpl-3.0.txt
@@ -131,6 +126,7 @@ class RFM69 {
     static void isr0();
     void virtual interruptHandler();
     virtual void interruptHook(uint8_t CTLbyte) {};
+    static volatile bool _inISR;
     virtual void sendFrame(uint8_t toAddress, const void* buffer, uint8_t size, bool requestACK=false, bool sendACK=false);
 
     static RFM69* selfPointer;
@@ -151,6 +147,7 @@ class RFM69 {
     virtual void setHighPowerRegs(bool onOff);
     virtual void select();
     virtual void unselect();
+    inline void maybeInterrupts();
 };
 
 #endif
